@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Log in</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+				<section id="main" class="wrapper">
+				<div class="inner">
+					<form method="post" action="/login">
+						<div class="row gtr-uniform">     <!-- comando messo da chatgpt perchè volevo i due form uno sopra l'altro-->
+							<!--style messo per avere spazio tra una casella e l'altra-->
+							<style> 
+								.spacer{
+									margin-bottom: 20px;
+								}
+							</style>
+
+							<div class="col-6 spacer">
+							<input type="text" name="demo-id" id="demo-id" placeholder="ID" required />
+							</div>
+						</div>
+						<div class="row gtr-uniform">
+							<div class="col-6 spacer">
+								<input type="password" name="demo-password" id="demo-password" placeholder="Password" required />
+							</div>
+						</div>	
+						<div class="col-12">
+							<ul class="actions">
+								<li><a href="hub.html" class="button">Log in</a></li>
+							</ul>
+						</div>
+					</form>
+				</div>
+				</section>
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
