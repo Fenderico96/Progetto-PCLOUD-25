@@ -1,0 +1,27 @@
+<canvas id="myChart" width="400" height="200"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('myChart').getContext('2d');
+const myChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: ['10:00', '10:05', '10:10'],
+    datasets: [{
+      label: 'Temperatura °C',
+      data: [23, 24, 25],
+      borderColor: 'rgba(75, 192, 192, 1)',
+      tension: 0.4,
+      fill: false
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: {
+        beginAtZero: true
+      }
+    }
+  }
+});
+</script>

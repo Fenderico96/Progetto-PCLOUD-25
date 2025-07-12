@@ -1,0 +1,204 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Graph</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+		<style> /*codice chiesto a gemini per migliorare la grafica degli sliders sul sito*/
+			body {
+				font-family: Arial, sans-serif;
+				margin: 30px;
+			}
+
+			#sliderContainer {
+				margin: 20px 0;
+				display: flex; /* Use flexbox for horizontal alignment */
+				justify-content: center; /* Center the items horizontally */
+				align-items: center;
+				gap: 20px; /* Space between items */
+				flex-wrap: wrap;
+				background-color: rgba(255, 255, 255, 0.08); /* Slightly more opaque for better visibility, adjust as needed */
+				padding: 15px 25px; /* Increased padding */
+				border-radius: 10px;
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+				color: white; /* Ensure text is visible against the background */
+			}
+
+			#sliderContainer label {
+				font-weight: bold;
+				white-space: nowrap; /* Prevent labels from wrapping */
+			}
+
+			#sliderContainer input[type="range"] {
+				flex-grow: 1; /* Allow sliders to take up available space */
+				max-width: 300px; /* Limit slider width for better control */
+				-webkit-appearance: none; /* Remove default slider styles for custom styling */
+				appearance: none;
+				height: 8px; /* Thinner track */
+				background: rgba(255, 255, 255, 0.3); /* Lighter track color */
+				outline: none;
+				border-radius: 5px;
+				transition: opacity .2s;
+			}
+
+			#sliderContainer input[type="range"]::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				appearance: none;
+				width: 20px; /* Larger thumb */
+				height: 20px; /* Larger thumb */
+				background: #007bff; /* Blue thumb color, adjust to match your theme */
+				cursor: pointer;
+				border-radius: 50%; /* Circular thumb */
+				border: 2px solid white; /* White border for contrast */
+			}
+
+			#sliderContainer input[type="range"]::-moz-range-thumb {
+				width: 20px;
+				height: 20px;
+				background: #007bff;
+				cursor: pointer;
+				border-radius: 50%;
+				border: 2px solid white;
+			}
+
+			#sliderContainer span {
+				min-width: 60px; /* Ensure time labels have consistent width */
+				text-align: right;
+			}
+		</style>
+	</head>
+	<body class="is-preload">
+
+		<!-- Header -->
+			<header id="header">
+				<a href="index.html" class="title">Hyperspace</a>
+				<nav>
+					<ul>
+						<li><a href="hub.html">Home</a></li>
+						<li><a href="graph.html" class="active">Graph</a></li>
+						<li><a href="alarm.html">Alarm</a></li>
+						<li><a href="hub.html#three">Logout</a></li>
+					</ul>
+				</nav>
+			</header>
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<section id="main" class="wrapper">
+						<div class="inner">
+							<h1 class="major">Graph</h1>
+							<canvas id="temperatureChart" height="100"></canvas>
+							<div id="sliderContainer">
+								<label for="startTime">From:</label>
+								<input type="range" id="startTime" min="0" max="23" value="0" />
+								<span id="startLabel">00:00</span>
+
+								<label for="endTime" style="margin-left: 20px;">To:</label>
+								<input type="range" id="endTime" min="0" max="23" value="23" />
+								<span id="endLabel">23:00</span>
+							</div>
+						</div>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer" class="wrapper alt">
+				<div class="inner">
+					<ul class="menu">
+						<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+
+
+			<!--Grafico-->			
+			<script> //Script del grafico     POSSIBILE DOMANDA D'ESAME Ho dovuto metterlo negli scripts finali sennò non mi fuzionava
+				// Dati fittizi: 24 letture orarie della temperatura
+				const temperatureData = Array.from({ length: 24 }, (_, i) => ({
+				time: `${i.toString().padStart(2, '0')}:00`,
+				temp: 20 + Math.sin(i / 3) * 5 + Math.random() * 2 // Valori simulati
+				}));
+
+				const ctx = document.getElementById('temperatureChart').getContext('2d');
+				const chart = new Chart(ctx, {
+				type: 'line',
+				data: {
+					labels: temperatureData.map(d => d.time),
+					datasets: [{
+					label: 'Temperature (°C)',
+					data: temperatureData.map(d => d.temp),
+					borderColor: 'white',
+					//backgroundColor: 'rgba(255, 255, 255, 0.1)',  //va messo così e non white perchè sennò mi colora tutto di bianco accesso senza trasparenza
+					tension: 0.4,
+					fill: false  // non voglio area sottostante
+					}]
+				},
+				options: {
+					responsive: true,
+					scales: {
+					y: {
+						beginAtZero: false,  //se voglio che il grafico mi cominci a 0
+						title: {
+						display: true,
+						text: 'Temperature (°C)'
+						}
+					},
+					x: {
+						title: {
+						display: true,
+						text: 'Time'
+						}
+					}
+					}
+				}
+				});
+
+				//Filtro per fascia oraria con slider
+				const startSlider = document.getElementById('startTime');
+				const endSlider = document.getElementById('endTime');
+				const startLabel = document.getElementById('startLabel');
+				const endLabel = document.getElementById('endLabel');
+
+				function updateChart() {
+				let start = parseInt(startSlider.value);
+				let end = parseInt(endSlider.value);
+
+				if (start > end) [start, end] = [end, start];
+
+				const filtered = temperatureData.slice(start, end + 1);
+				chart.data.labels = filtered.map(d => d.time);
+				chart.data.datasets[0].data = filtered.map(d => d.temp);
+				chart.update();
+
+				startLabel.textContent = `${start.toString().padStart(2, '0')}:00`;
+				endLabel.textContent = `${end.toString().padStart(2, '0')}:00`;
+				}
+
+				startSlider.addEventListener('input', updateChart);
+				endSlider.addEventListener('input', updateChart);
+
+				updateChart(); // Inizializzazione
+			</script>
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
