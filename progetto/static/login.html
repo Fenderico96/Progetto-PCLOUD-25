@@ -23,20 +23,20 @@
 			<div id="wrapper">
 				<section id="main" class="wrapper">
 					<div class="inner">
-						<form method="post" action="hub.html">
+						<form method="post" action="/login">
 							
 							<div class="row gtr-uniform spacer">
 								<div class="col-6">
-									<input type="text" name="demo-id" id="demo-id" placeholder="ID" required />
+									<input type="text" name="u" placeholder="ID" required />
 								</div>
 							</div>
 
 							<div class="row gtr-uniform spacer">
 								<div class="col-6">
-									<input type="password" name="demo-password" id="demo-password" placeholder="Password" required />
+									<input type="password" name="p" placeholder="Password" required />
 								</div>
 							</div>
-
+							<input type="hidden" id="next" name="next">
 							<div class="row">
 								<div class="col-12">
 									<ul class="actions">
@@ -50,6 +50,12 @@
 			</div>
 
 		<!-- Scripts -->
+			<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+			<script type="text/javascript">
+				const searchParams = new URLSearchParams(window.location.search);
+				next = searchParams.get('next')
+				$("#next").val(next)
+			</script>
 			<script src="assets/js/jquery.min.js"></script>
 			<script src="assets/js/jquery.scrollex.min.js"></script>
 			<script src="assets/js/jquery.scrolly.min.js"></script>

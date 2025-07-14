@@ -28,19 +28,33 @@
 			</header>
 
 		<!-- Wrapper -->
-			<div id="wrapper">
+			<section id="main" class="wrapper">
+				<div class="inner">
+					<h1 class="major">Control Room</h1>
 
-				<!-- Main -->
-					<section id="main" class="wrapper">
-						<div class="inner">
-							<h1 class="major">A Generic Page</h1>
-							<span class="image fit"><img src="images/pic04.jpg" alt="" /></span>
-							<p>Donec eget ex magna. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque venenatis dolor imperdiet dolor mattis sagittis. Praesent rutrum sem diam, vitae egestas enim auctor sit amet. Pellentesque leo mauris, consectetur id ipsum sit amet, fergiat. Pellentesque in mi eu massa lacinia malesuada et a elit. Donec urna ex, lacinia in purus ac, pretium pulvinar mauris. Curabitur sapien risus, commodo eget turpis at, elementum convallis elit. Pellentesque enim turpis, hendrerit tristique.</p>
-							<p>Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque venenatis dolor imperdiet dolor mattis sagittis. Praesent rutrum sem diam, vitae egestas enim auctor sit amet. Pellentesque leo mauris, consectetur id ipsum sit amet, fersapien risus, commodo eget turpis at, elementum convallis elit. Pellentesque enim turpis, hendrerit tristique lorem ipsum dolor.</p>
+					<!-- Dashboard -->
+					<div class="box-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem; margin-bottom: 3rem;">
+						<div class="box" style="flex: 1 1 300px; background: #2e3141; color: white; padding: 2rem; border-radius: 1rem; text-align: center;">
+							<h2>Temperature</h2>
+							<p id="temperature" style="font-size: 2rem;">-- °C</p>
 						</div>
-					</section>
+						<div class="box" style="flex: 1 1 300px; background: #2e3141; color: white; padding: 2rem; border-radius: 1rem; text-align: center;">
+							<h2>Door State</h2>
+							<p id="door-status" style="font-size: 2rem;">--</p>
+						</div>
+					</div>
 
-			</div>
+					<!-- Bottone centrale -->
+					<div style="text-align: center;">
+
+						<a href="#" class="button large" style="background-color: #e53935; border-color: #e53935; color: white; display: inline-flex; align-items: center; font-weight: bold;">
+							<span class="icon solid fa-biohazard fa-3x" style="margin-right: 0.5em;"></span>
+							<span style="font-size: 1.2em;">Activate Alarm</span>
+						</a>
+
+					</div>
+				</div>
+			</section>
 
 		<!-- Footer -->
 			<footer id="footer" class="wrapper alt">
