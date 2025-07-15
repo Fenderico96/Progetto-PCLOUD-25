@@ -9,7 +9,6 @@ import json
 import threading
 import pytz       #per gestire il fuso orario di Roma sennò app engine salva i dati in UTC e sono 2 ore indietro
 
-now = dt.now(ZoneInfo("Europe/Rome"))
 
 
 #variabili globali
