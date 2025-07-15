@@ -7,7 +7,7 @@ from google.cloud import firestore
 from datetime import datetime as dt
 import json
 import threading
-from zoneinfo import ZoneInfo       #per gestire il fuso orario di Roma sennò app engine salva i dati in UTC e sono 2 ore indietro
+import pytz       #per gestire il fuso orario di Roma sennò app engine salva i dati in UTC e sono 2 ore indietro
 
 now = dt.now(ZoneInfo("Europe/Rome"))
 
@@ -59,7 +59,8 @@ mqtt = Mqtt(app)
 # Function to add document to Firestore
 def add_data(data):
     #ogni volta che mi arriva un dato lo salvo in Firestore con data e ora così da poterlo visualizzare in un grafico e da gestire meglio l'allarme
-    now = dt.now(ZoneInfo("Europe/Rome"))
+    italy_tz = pytz.timezone('Europe/Rome')
+    now = dt.now(italy_tz)
     day = now.strftime("%d-%m-%Y")
     hour = now.strftime("%H:%M")    
     # Determina la collezione in base al tipo di dato (Questo if determina il tipo di dato che si vuole salvare e lo smista tra le collezioni)
@@ -89,7 +90,8 @@ def add_data(data):
     print(f"Dato salvato in {collection}/{day}: {new_entry}") #check per vedere se la cosa va in porto
 
 def add_problem(tipo):
-    now = dt.now(ZoneInfo("Europe/Rome"))
+    italy_tz = pytz.timezone('Europe/Rome')
+    now = dt.now(italy_tz)
     day = now.strftime("%d-%m-%Y")
     hour = now.strftime("%H:%M")    
     collection = 'Problemi'
