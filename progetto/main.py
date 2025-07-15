@@ -5,6 +5,16 @@ from flask_mqtt import Mqtt
 from google.cloud import firestore
 from datetime import datetime as dt
 import json
+import threading
+import time
+
+
+#variabili globali
+door_state = "CLOSED"  # Stato iniziale della porta
+open_timer = None  # Timer for door open state
+temp_timer = None  # Timer for temperature alarm
+alarm_sent = False  # Flag to check if alarm has been sent
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -39,6 +49,8 @@ mqtt = Mqtt(app)
 
 
 #----------------------------------------------------------- FIRESTORE FUNCTIONS ---------------------------------------------------------
+
+
 # Function to add document to Firestore
 def add_data(data):
     #ogni volta che mi arriva un dato lo salvo in Firestore con data e ora così da poterlo visualizzare in un grafico e da gestire meglio l'allarme
@@ -71,6 +83,40 @@ def add_data(data):
     doc_ref.set({"dati": existing_data})
     print(f"Dato salvato in {collection}/{day}: {new_entry}") #check per vedere se la cosa va in porto
 
+def add_problem(tipo):
+    now = dt.now()
+    day = now.strftime("%d-%m-%Y")
+    hour = now.strftime("%H:%M")    
+    collection = 'Problemi'
+    doc_ref = db.collection(collection).document(day)
+    new_entry = {"tipo": tipo, "ora": hour}
+
+    #Controlla se il documento esiste o crea uno nuovo se non esiste
+    doc = doc_ref.get()
+    if doc.exists:
+        existing_data = doc.to_dict().get("dati", [])
+    else:
+        existing_data = []
+
+    existing_data.append(new_entry)
+    doc_ref.set({"dati": existing_data})
+    print(f"Problema salvato in {collection}/{day}: {new_entry}") #check per vedere se la cosa va in porto
+
+
+def send_alarm_to_arduino():
+    global alarm_sent,open_timer
+    if door_state != "CLOSED":
+        print(" Porta ancora aperta dopo 30 secondi. Invio allarme ad Arduino.")
+        mqtt.publish("/pcloud2025reggioemilia/test/alarm", "ON")
+        add_problem("Porta aperta troppo a lungo")
+        alarm_sent = True
+        open_timer = None  # Reset timer after sending alarm
+
+def set_tempAlarmOFF(): #prima avevo messo un timer di 20 secondi(time.sleep(20)) direttamente nella route ma mi dava problemi con il publish dell'allarme
+    global temp_timer
+    mqtt.publish("/pcloud2025reggioemilia/test/alarm", "OFF")  # Spegni l'allarme
+    print("Allarme temperatura spento.")
+    temp_timer = None  # Reset timer after sending alarm
 
 #---------------------------------------------------------- FLASK ROUTES --------------------------------------------------------- 
 
@@ -131,6 +177,33 @@ def show():
     return str(database_local)
 
 
+@app.route('/toggle_alarm', methods=['POST'])
+def toggle_alarm():
+    state = request.json.get("state")
+    if state == "ON":
+        mqtt.publish("/pcloud2025reggioemilia/test/alarm", "ON")
+    elif state == "OFF":
+        mqtt.publish("/pcloud2025reggioemilia/test/alarm", "OFF")
+    else:
+        return jsonify({"error": "Invalid state"}), 400
+    return jsonify({"status": "Alarm toggled", "state": state})
+
+
+@app.route('/get_temperature_data')
+@login_required
+def get_temperature_data():
+    docs = db.collection('Sensore Temperatura').stream()
+    result = []
+    for doc in docs:
+        day = doc.id  # es: '12-07-2025'
+        entries = doc.to_dict().get("dati", [])
+        for entry in entries:
+            result.append({
+                "date": "-".join(reversed(day.split("-"))),  # diventa '2025-07-12' perchè chart.js vuole il formato YYYY-MM-DD
+                "time": entry["ora"],
+                "temp": float(entry["temperatura"])
+            })
+    return jsonify(result)
 
 
 #--------------------------------------------------------- MQTT ---------------------------------------------------------
@@ -139,28 +212,51 @@ def show():
 # Callback for MQTT message received
 @mqtt.on_message()
 def handle_mqtt_message(client, userdata, message):
-    msg_payload = message.payload.decode()  # Decodifica da bytes a stringa
+    global door_state, open_timer, alarm_sent, temp_timer
+    msg_payload = message.payload.decode()
     print(f"Received MQTT message: {msg_payload} on topic {message.topic}")
 
-    # Analizza in base al tipo di topic
     if message.topic.endswith("door"):
-        add_data(msg_payload)  # Stringa "OPEN" o "CLOSED"
+        door_state = msg_payload
+        if door_state == "OPEN":
+            alarm_sent = False
+            if open_timer is None:
+                open_timer = threading.Timer(30.0, send_alarm_to_arduino)
+                open_timer.start()
+        elif door_state == "CLOSED":
+            if open_timer is not None:
+                open_timer.cancel()
+                open_timer = None
+            if alarm_sent:
+                mqtt.publish("/pcloud2025reggioemilia/test/alarm", "OFF")  # Reset alarm
+                alarm_sent = False
+                print("Porta richiusa dopo allarme.")
+
+        add_data(msg_payload)
+
     elif message.topic.endswith("temperature"):
         try:
-            data = json.loads(msg_payload)  # {"Temperature": 24.0}
+            data = json.loads(msg_payload)
             if "Temperature" in data:
-                add_data({"temperatura": data["Temperature"]})
+                temp_value = data["Temperature"]
+                add_data({"temperatura": temp_value})
+
+                if temp_value > 30:
+                    print(f"Temperatura alta: {temp_value}°C. Invio allarme.")
+                    mqtt.publish("/pcloud2025reggioemilia/test/alarm", "ON")   #qui metto un publish diretto al topic dell'allarme perchè così posso inviare il dato con il tipo "Temperatura alta", mentre la funzione di allarme mi manda l'altro tipo ovvero "Porta aperta troppo a lungo"
+                    add_problem("Temperatura alta")
+                    if temp_timer is None:
+                        temp_timer = threading.Timer(30.0, set_tempAlarmOFF)
+                        temp_timer.start()
+                   
+
             else:
                 print("Chiave Temperature mancante")
         except json.JSONDecodeError:
             print("Errore nel parsing del JSON:", msg_payload)
-    else:
-        print("Topic non riconosciuto")
 
-    # Salva localmente
     database_local.append(msg_payload)
 
-    # Chiama callback Flask
     with app.test_request_context():
         response = mqtt_callback({"topic": message.topic, "message": msg_payload})
         print("Flask callback response:", response.get_json())

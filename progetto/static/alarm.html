@@ -11,6 +11,14 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="assets/css/main.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+		<style>
+			.custom-image img {
+				max-width: 840px; 
+				height: auto;
+				margin: 0 auto;
+				display: block;
+			}
+		</style>
 	</head>
 	<body class="is-preload">
 
@@ -31,26 +39,40 @@
 			<section id="main" class="wrapper">
 				<div class="inner">
 					<h1 class="major">Control Room</h1>
-
-					<!-- Dashboard -->
-					<div class="box-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem; margin-bottom: 3rem;">
-						<div class="box" style="flex: 1 1 300px; background: #2e3141; color: white; padding: 2rem; border-radius: 1rem; text-align: center;">
-							<h2>Temperature</h2>
-							<p id="temperature" style="font-size: 2rem;">-- °C</p>
-						</div>
-						<div class="box" style="flex: 1 1 300px; background: #2e3141; color: white; padding: 2rem; border-radius: 1rem; text-align: center;">
-							<h2>Door State</h2>
-							<p id="door-status" style="font-size: 2rem;">--</p>
-						</div>
-					</div>
+					<span class="image fit custom-image">
+								<img src="images/sleep_homer.png" alt=""/>
+							</span>
 
 					<!-- Bottone centrale -->
 					<div style="text-align: center;">
 
-						<a href="#" class="button large" style="background-color: #e53935; border-color: #e53935; color: white; display: inline-flex; align-items: center; font-weight: bold;">
-							<span class="icon solid fa-biohazard fa-3x" style="margin-right: 0.5em;"></span>
-							<span style="font-size: 1.2em;">Activate Alarm</span>
-						</a>
+						<button id="alarm-btn" class="button large" style="background-color: #e53935; border-color: #e53935; color: white; display: inline-flex; align-items: center; font-weight: bold;">
+						<span class="icon solid fa-biohazard fa-3x" style="margin-right: 0.5em;"></span>
+						<span id="alarm-label" style="font-size: 1.2em;">Activate Alarm</span>
+					</button>
+
+					<script>
+						let alarmOn = false;
+
+						document.getElementById("alarm-btn").addEventListener("click", () => {
+							const newState = alarmOn ? "OFF" : "ON";
+							fetch("/toggle_alarm", {
+								method: "POST",
+								headers: {
+									"Content-Type": "application/json"
+								},
+								body: JSON.stringify({ state: newState })
+							})
+							.then(res => res.json())
+							.then(data => {
+								console.log(data);
+								alarmOn = !alarmOn;
+								document.getElementById("alarm-label").innerText = alarmOn ? "Deactivate Alarm" : "Activate Alarm";
+								document.getElementById("alarm-btn").style.backgroundColor = alarmOn ? "#43a047" : "#e53935";
+								document.getElementById("alarm-btn").style.borderColor = alarmOn ? "#43a047" : "#e53935";
+							});
+						});
+					</script>
 
 					</div>
 				</div>

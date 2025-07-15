@@ -1,6 +1,6 @@
 #include "WiFiS3.h"
 #include "PubSubClient.h"
-#include "arduino_secrets.h" 
+#include "arduino_secret.h" 
 #include <LiquidCrystal_I2C.h> 
 #include "DHT.h"
 #define DHT11_PIN 13  // Define the pin used to connect the sensor
@@ -14,6 +14,16 @@ int buzzer = 4;
 LiquidCrystal_I2C lcd(0x27, 16, 2); // I2C address 0x27, 16 column and 2 rows
 DHT dht11(DHT11_PIN, DHT11);  // Create a DHT object
 int lastDoorState = -1; //IMPOSTO UNO STATO INIZIALE DELLA PORTA INDEFINITO
+
+//VARIABILI
+bool alarmActive = false;
+bool alarmOutput = false;
+unsigned long previousMillis = 0;
+unsigned long alarmStartMillis = 0;
+const long blinkInterval = 300;     // LED/Buzzer ON/OFF ogni 300ms 
+unsigned long lastTempPublishMillis = 0;
+const unsigned long tempPublishInterval = 300000; //mando messaggio ogni 5 minuti
+
 //CREDENZIALI WIFI
 const char* ssid = SECRET_SSID;
 const char* password = SECRET_PASS;
@@ -53,6 +63,8 @@ void reconnect() {
     Serial.print("Connessione al broker MQTT...");
     if (client.connect("ArduinoClient")) {
       Serial.println("connesso");
+      // Sottoscrizione al topic di allarme
+      client.subscribe("/pcloud2025reggioemilia/test/alarm");
     } else {
       Serial.print("fallito, rc=");
       Serial.print(client.state());
@@ -62,6 +74,39 @@ void reconnect() {
   }
 }
 
+
+
+
+  //--------------------------------- CALLBACK PER ALLARME -----------------------
+  void callback(char* topic, byte* payload, unsigned int length) {
+  String message;
+
+  for (int i = 0; i < length; i++) {
+    message += (char)payload[i];
+  }
+
+  Serial.print("Messaggio MQTT ricevuto su topic ");
+  Serial.print(topic);
+  Serial.print(": ");
+  Serial.println(message);
+
+  if (String(topic) == "/pcloud2025reggioemilia/test/alarm") {
+    if (message == "ON") {
+      alarmActive = true;
+      alarmStartMillis = millis(); // Solo se vuoi ancora farlo lampeggiare
+      Serial.println("Allarme attivato");
+    } else if (message == "OFF") {
+      alarmActive = false;
+      digitalWrite(led, LOW);
+      digitalWrite(buzzer, LOW);
+      Serial.println("Allarme disattivato");
+    }
+  }
+}
+
+
+
+
 void setup(){
 
   Serial.begin(9600);
@@ -69,7 +114,7 @@ void setup(){
 
   setup_wifi();
   client.setServer(mqtt_server, 1883);  // Porta standard MQTT
-
+  client.setCallback(callback);
 
 
   //-------------------------- INIZIALIZZAZIONE SENSORI -----------------------
@@ -118,15 +163,16 @@ void loop() {
 
     Serial.print(" Temperature: ");
     Serial.print(tempC);
-    Serial.print("°C");
+    Serial.print("°C ");
     Serial.println("   "); 
+
+
   }
   
 
   //------------------------------MANDA DATI PORTA -----------------
   if (state != lastDoorState) {
     lastDoorState = state;
-
     if (state == HIGH) {
       Serial.println("DOOR OPEN");
       lcd.setCursor(0, 1);
@@ -141,19 +187,50 @@ void loop() {
   }
 
   //-------------------------------------- MANDA DATI TEMPERATURA -----------------------
-  char payload[50];
-  snprintf(payload, 50, "{\"Temperature\": %.2f}", tempC);
+   unsigned long currentMillis = millis();
 
-  client.publish("/pcloud2025reggioemilia/test/temperature", payload);
-  Serial.print("Dati MQTT pubblicati: ");
-  Serial.println(payload);
+  if (!isnan(tempC)) {
+    bool shouldSend = false;
+
+    if (tempC > 30.0) {
+      shouldSend = true;  // Temperatura critica, mando subito
+      Serial.println("Temperatura sopra i 30°C! Inviata immediatamente.");
+      delay(20000);  // Devo mettere un delay sennò mi manda dati all'impazzata e sballa tutto
+    } else if (currentMillis - lastTempPublishMillis >= tempPublishInterval) {
+      shouldSend = true;  // Sono passati i 5 minuti quindi mando
+    }
+
+    if (shouldSend) {
+      char payload[50];
+      snprintf(payload, 50, "{\"Temperature\": %.2f}", tempC);
+      client.publish("/pcloud2025reggioemilia/test/temperature", payload);
+      Serial.print("Dati MQTT pubblicati: ");
+      Serial.println(payload);
+      lastTempPublishMillis = currentMillis;  // Se mando messaggio resetta il timer
+    }
+  }
+ 
+
+  //-------------------------- ALLARME ------------------------------
+    if (alarmActive) {
+    lcd.clear();
+    lcd.print("ALARM ENGAGED");
+
+    unsigned long currentMillis = millis();
+    
+    if (currentMillis - previousMillis >= blinkInterval) {
+      previousMillis = currentMillis;
+
+      alarmOutput = !alarmOutput; // Inverte stato
+      digitalWrite(led, alarmOutput);
+      digitalWrite(buzzer, alarmOutput);
+    }
+  }
 
 
 
+ delay(1000);
 
 
-
-
-
-  delay(5000);
+  
 }
