@@ -211,7 +211,7 @@
         chart.update();
     }
 
-    // Carica solo i dati temperatura
+    // Carica dati temperatura
     document.getElementById('loading').style.display = 'block';
     fetch('/get_temperature_data')
         .then(res => res.json())

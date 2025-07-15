@@ -1,12 +1,12 @@
 from flask import Flask,jsonify,redirect,url_for, request, render_template
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required, UserMixin
-from secret import secret_key
 from flask_mqtt import Mqtt
+from secret import secret_key
+from mqtt_secret import mqttuser, mqttpass
 from google.cloud import firestore
 from datetime import datetime as dt
 import json
 import threading
-import time
 
 
 #variabili globali
@@ -31,18 +31,20 @@ class User(UserMixin):
         self.username = username
 
 # Firestore Configuration
-db = 'test1'
-db = firestore.Client.from_service_account_json('progetto/credentials.json',database=db)
+db = 'progetto'
+db = firestore.Client(database=db)
 database = db 
 database_local = []    #mi serve per vedere i dati che arrivano con la route /show
 collection1 = 'Sensore Temperatura'
 collection2 = 'Sensore Porta'
 
 # MQTT Configuration
-app.config['MQTT_BROKER_URL'] = 'broker.emqx.io'  # Change to your broker
+app.config['MQTT_BROKER_URL'] = '34.154.46.126'  # Change to your broker NBBBBBBBBB: l'ho promosso a indirizzo statico su GC così se succede qualcosa rimane quello (si spera)
+app.config['MQTT_USERNAME'] = mqttuser
+app.config['MQTT_PASSWORD'] = mqttpass
 app.config['MQTT_BROKER_PORT'] = 1883
 app.config['MQTT_KEEPALIVE'] = 60
-app.config['MQTT_TOPIC'] = '/pcloud2025reggioemilia/test/#'
+app.config['MQTT_TOPIC'] = '/progettopcloud2025/monterosso/#'
 
 mqtt = Mqtt(app)
 
@@ -107,14 +109,14 @@ def send_alarm_to_arduino():
     global alarm_sent,open_timer
     if door_state != "CLOSED":
         print(" Porta ancora aperta dopo 30 secondi. Invio allarme ad Arduino.")
-        mqtt.publish("/pcloud2025reggioemilia/test/alarm", "ON")
+        mqtt.publish("/progettopcloud2025/monterosso/alarm", "ON")
         add_problem("Porta aperta troppo a lungo")
         alarm_sent = True
         open_timer = None  # Reset timer after sending alarm
 
 def set_tempAlarmOFF(): #prima avevo messo un timer di 20 secondi(time.sleep(20)) direttamente nella route ma mi dava problemi con il publish dell'allarme
     global temp_timer
-    mqtt.publish("/pcloud2025reggioemilia/test/alarm", "OFF")  # Spegni l'allarme
+    mqtt.publish("/progettopcloud2025/monterosso/alarm", "OFF")  # Spegni l'allarme
     print("Allarme temperatura spento.")
     temp_timer = None  # Reset timer after sending alarm
 
@@ -181,9 +183,9 @@ def show():
 def toggle_alarm():
     state = request.json.get("state")
     if state == "ON":
-        mqtt.publish("/pcloud2025reggioemilia/test/alarm", "ON")
+        mqtt.publish("/progettopcloud2025/monterosso/alarm", "ON")
     elif state == "OFF":
-        mqtt.publish("/pcloud2025reggioemilia/test/alarm", "OFF")
+        mqtt.publish("/progettopcloud2025/monterosso/alarm", "OFF")
     else:
         return jsonify({"error": "Invalid state"}), 400
     return jsonify({"status": "Alarm toggled", "state": state})
@@ -228,7 +230,7 @@ def handle_mqtt_message(client, userdata, message):
                 open_timer.cancel()
                 open_timer = None
             if alarm_sent:
-                mqtt.publish("/pcloud2025reggioemilia/test/alarm", "OFF")  # Reset alarm
+                mqtt.publish("/progettopcloud2025/monterosso/alarm", "OFF")  # Reset alarm
                 alarm_sent = False
                 print("Porta richiusa dopo allarme.")
 
@@ -243,7 +245,7 @@ def handle_mqtt_message(client, userdata, message):
 
                 if temp_value > 30:
                     print(f"Temperatura alta: {temp_value}°C. Invio allarme.")
-                    mqtt.publish("/pcloud2025reggioemilia/test/alarm", "ON")   #qui metto un publish diretto al topic dell'allarme perchè così posso inviare il dato con il tipo "Temperatura alta", mentre la funzione di allarme mi manda l'altro tipo ovvero "Porta aperta troppo a lungo"
+                    mqtt.publish("/progettopcloud2025/monterosso/alarm", "ON")   #qui metto un publish diretto al topic dell'allarme perchè così posso inviare il dato con il tipo "Temperatura alta", mentre la funzione di allarme mi manda l'altro tipo ovvero "Porta aperta troppo a lungo"
                     add_problem("Temperatura alta")
                     if temp_timer is None:
                         temp_timer = threading.Timer(30.0, set_tempAlarmOFF)
@@ -266,7 +268,7 @@ def handle_mqtt_message(client, userdata, message):
 def mqtt_callback(data=None):
     if data is None:
         data = request.json  # Get data from request if manually triggered
-    print(f"Flask received MQTT callback: {data}")
+    #print(f"Flask received MQTT callback: {data}")
     return jsonify({"status": "success", "received_data": data})
 
 # Subscribe to MQTT topic on startup

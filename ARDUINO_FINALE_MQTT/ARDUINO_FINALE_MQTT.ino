@@ -28,8 +28,11 @@ const unsigned long tempPublishInterval = 300000; //mando messaggio ogni 5 minut
 const char* ssid = SECRET_SSID;
 const char* password = SECRET_PASS;
 
-// MQTT BROKER
-const char* mqtt_server = "broker.emqx.io";
+
+// MQTT BROKER E CREDENZIALI
+const char* mqtt_server = "34.154.46.126";
+const char* mqtt_user = SECRET_USER;
+const char* mqtt_pass = SECRET_MQTT_PASS;
 
 
 WiFiClient wifiClient;
@@ -61,10 +64,10 @@ void reconnect() {
   
   while (!client.connected()) {
     Serial.print("Connessione al broker MQTT...");
-    if (client.connect("ArduinoClient")) {
+    if (client.connect("ArduinoClient", mqtt_user, mqtt_pass)) {
       Serial.println("connesso");
       // Sottoscrizione al topic di allarme
-      client.subscribe("/pcloud2025reggioemilia/test/alarm");
+      client.subscribe("/progettopcloud2025/monterosso/alarm");
     } else {
       Serial.print("fallito, rc=");
       Serial.print(client.state());
@@ -90,7 +93,7 @@ void reconnect() {
   Serial.print(": ");
   Serial.println(message);
 
-  if (String(topic) == "/pcloud2025reggioemilia/test/alarm") {
+  if (String(topic) == "/progettopcloud2025/monterosso/alarm") {
     if (message == "ON") {
       alarmActive = true;
       alarmStartMillis = millis(); // Solo se vuoi ancora farlo lampeggiare
@@ -177,12 +180,12 @@ void loop() {
       Serial.println("DOOR OPEN");
       lcd.setCursor(0, 1);
       lcd.print("DOOR OPEN       ");
-      client.publish("/pcloud2025reggioemilia/test/door", "OPEN");
+      client.publish("/progettopcloud2025/monterosso/door", "OPEN");
     } else {
       Serial.println("DOOR CLOSED");
       lcd.setCursor(0, 1);
       lcd.print("DOOR CLOSED     ");
-      client.publish("/pcloud2025reggioemilia/test/door", "CLOSED");
+      client.publish("/progettopcloud2025/monterosso/door", "CLOSED");
     }
   }
 
@@ -203,7 +206,7 @@ void loop() {
     if (shouldSend) {
       char payload[50];
       snprintf(payload, 50, "{\"Temperature\": %.2f}", tempC);
-      client.publish("/pcloud2025reggioemilia/test/temperature", payload);
+      client.publish("/progettopcloud2025/monterosso/temperature", payload);
       Serial.print("Dati MQTT pubblicati: ");
       Serial.println(payload);
       lastTempPublishMillis = currentMillis;  // Se mando messaggio resetta il timer
