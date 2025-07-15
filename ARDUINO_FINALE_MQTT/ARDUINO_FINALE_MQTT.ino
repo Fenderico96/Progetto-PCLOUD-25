@@ -190,28 +190,32 @@ void loop() {
   }
 
   //-------------------------------------- MANDA DATI TEMPERATURA -----------------------
-   unsigned long currentMillis = millis();
+  unsigned long currentMillis = millis();
+  static unsigned long lastCriticalTempMillis = 0;
+  const unsigned long criticalTempInterval = 20000;  // 20 secondi
 
   if (!isnan(tempC)) {
-    bool shouldSend = false;
+  bool shouldSend = false;
 
-    if (tempC > 30.0) {
-      shouldSend = true;  // Temperatura critica, mando subito
+  if (tempC > 30.0) {
+    if (currentMillis - lastCriticalTempMillis >= criticalTempInterval) {
+      shouldSend = true;
       Serial.println("Temperatura sopra i 30°C! Inviata immediatamente.");
-      delay(20000);  // Devo mettere un delay sennò mi manda dati all'impazzata e sballa tutto
-    } else if (currentMillis - lastTempPublishMillis >= tempPublishInterval) {
-      shouldSend = true;  // Sono passati i 5 minuti quindi mando
+      lastCriticalTempMillis = currentMillis;
     }
-
-    if (shouldSend) {
-      char payload[50];
-      snprintf(payload, 50, "{\"Temperature\": %.2f}", tempC);
-      client.publish("/progettopcloud2025/monterosso/temperature", payload);
-      Serial.print("Dati MQTT pubblicati: ");
-      Serial.println(payload);
-      lastTempPublishMillis = currentMillis;  // Se mando messaggio resetta il timer
-    }
+  } else if (currentMillis - lastTempPublishMillis >= tempPublishInterval) {
+    shouldSend = true;
+    lastTempPublishMillis = currentMillis;
   }
+
+  if (shouldSend) {
+    char payload[50];
+    snprintf(payload, 50, "{\"Temperature\": %.2f}", tempC);
+    client.publish("/progettopcloud2025/monterosso/temperature", payload);
+    Serial.print("Dati MQTT pubblicati: ");
+    Serial.println(payload);
+  }
+}
  
 
   //-------------------------- ALLARME ------------------------------
