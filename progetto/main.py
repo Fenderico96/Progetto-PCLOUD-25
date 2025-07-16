@@ -1,4 +1,4 @@
-from flask import Flask,jsonify,redirect,url_for, request, render_template
+from flask import Flask,jsonify,redirect, request
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required, UserMixin
 from flask_mqtt import Mqtt
 from secret import secret_key
@@ -7,7 +7,7 @@ from google.cloud import firestore
 from datetime import datetime as dt
 import json
 import threading
-import pytz       #per gestire il fuso orario di Roma sennò app engine salva i dati in UTC e sono 2 ore indietro
+import pytz
 
 
 
@@ -33,8 +33,8 @@ class User(UserMixin):
         self.username = username
 
 # Firestore Configuration
-db = 'test1'
-db = firestore.Client.from_service_account_json('credentials.json', database=db)
+db = 'progetto'
+db = firestore.Client.from_service_account_json('progetto/credentials.json',database=db)
 database = db 
 database_local = []    #mi serve per vedere i dati che arrivano con la route /show
 collection1 = 'Sensore Temperatura'
@@ -228,6 +228,7 @@ def handle_mqtt_message(client, userdata, message):
             alarm_sent = False
             if open_timer is None:
                 open_timer = threading.Timer(30.0, send_alarm_to_arduino)
+                open_timer.daemon = True
                 open_timer.start()
         elif door_state == "CLOSED":
             if open_timer is not None:
@@ -251,8 +252,10 @@ def handle_mqtt_message(client, userdata, message):
                     print(f"Temperatura alta: {temp_value}°C. Invio allarme.")
                     mqtt.publish("/progettopcloud2025/monterosso/alarm", "ON")   #qui metto un publish diretto al topic dell'allarme perchè così posso inviare il dato con il tipo "Temperatura alta", mentre la funzione di allarme mi manda l'altro tipo ovvero "Porta aperta troppo a lungo"
                     add_problem("Temperatura alta")
+                    add_data({"temperatura": temp_value})
                     if temp_timer is None:
                         temp_timer = threading.Timer(30.0, set_tempAlarmOFF)
+                        temp_timer.daemon = True
                         temp_timer.start()
                    
 
@@ -263,9 +266,6 @@ def handle_mqtt_message(client, userdata, message):
 
     database_local.append(msg_payload)
 
-    with app.test_request_context():
-        response = mqtt_callback({"topic": message.topic, "message": msg_payload})
-        print("Flask callback response:", response.get_json())
 
 # Flask route to handle MQTT-triggered action
 @app.route('/mqtt_callback', methods=['POST'])
