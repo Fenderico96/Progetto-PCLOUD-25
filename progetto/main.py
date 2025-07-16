@@ -34,7 +34,7 @@ class User(UserMixin):
 
 # Firestore Configuration
 db = 'progetto'
-db = firestore.Client.from_service_account_json('progetto/credentials.json',database=db)
+db = firestore.Client(database=db)
 database = db 
 database_local = []    #mi serve per vedere i dati che arrivano con la route /show
 collection1 = 'Sensore Temperatura'
