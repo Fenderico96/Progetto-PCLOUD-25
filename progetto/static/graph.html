@@ -155,6 +155,9 @@
         },
         options: {
             responsive: true,
+            layout: {
+                padding: 0 
+            },
             scales: {
                 y: {
                     beginAtZero: false,
@@ -186,10 +189,18 @@
         let end = parseInt(endSlider.value);
         if (start > end) [start, end] = [end, start];
 
-        const filteredTemperature = historicalTemperatureData.filter(d => {
+        // Filtro per data e ora
+        let filteredTemperature = historicalTemperatureData.filter(d => {
             const hour = parseInt(d.time.split(':')[0]);
             return d.date === selectedDate && hour >= start && hour <= end;
         });
+
+        
+        filteredTemperature = filteredTemperature.filter((item, index, self) =>
+            index === self.findIndex(d =>
+                d.temp === item.temp && d.time === item.time
+            )
+        );
 
         chart.data.labels = filteredTemperature.map(d => d.time);
         chart.data.datasets[0].data = filteredTemperature.map(d => d.temp);
@@ -230,7 +241,6 @@
     startSlider.addEventListener('input', updateChart);
     endSlider.addEventListener('input', updateChart);
 </script>
-
 
 <script src="assets/js/jquery.min.js"></script>
 <script src="assets/js/jquery.scrollex.min.js"></script>
