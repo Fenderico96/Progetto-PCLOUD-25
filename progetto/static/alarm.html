@@ -23,78 +23,84 @@
 	<body class="is-preload">
 
 		<!-- Header -->
-			<header id="header">
-				<a href="index.html" class="title"></a>
-				<nav>
-					<ul>
-						<li><a href="hub.html">Home</a></li>
-						<li><a href="graph.html">Graph</a></li>
-						<li><a href="alarm.html" class="active">Alarm</a></li>
-						<li><a href="hub.html#three">Logout</a></li>
-					</ul>
-				</nav>
-			</header>
+		<header id="header">
+			<a href="index.html" class="title"></a>
+			<nav>
+				<ul>
+					<li><a href="hub.html">Home</a></li>
+					<li><a href="graph.html">Graph</a></li>
+					<li><a href="alarm.html" class="active">Alarm</a></li>
+					<li><a href="hub.html#three">Logout</a></li>
+				</ul>
+			</nav>
+		</header>
 
 		<!-- Wrapper -->
-			<section id="main" class="wrapper">
-				<div class="inner">
-					<h1 class="major">Control Room</h1>
-					<span class="image fit custom-image">
-								<img src="images/sleep_homer.png" alt=""/>
-					</span>
+		<section id="main" class="wrapper">
+			<div class="inner">
+				<h1 class="major">Control Room</h1>
+				<span class="image fit custom-image">
+					<img id="alarm-image" src="images/sleep_homer.png" alt=""/>
+				</span>
 
-					<!-- Bottone centrale -->
-					<div style="text-align: center;">
-
-						<button id="alarm-btn" class="button large" style="background-color: #e53935; border-color: #e53935; color: white; display: inline-flex; align-items: center; font-weight: bold;">
+				<!-- Bottone centrale -->
+				<div style="text-align: center;">
+					<button id="alarm-btn" class="button large" style="background-color: #e53935; border-color: #e53935; color: white; display: inline-flex; align-items: center; font-weight: bold;">
 						<span class="icon solid fa-biohazard fa-3x" style="margin-right: 0.5em;"></span>
 						<span id="alarm-label" style="font-size: 1.2em;">Activate Alarm</span>
 					</button>
-
-					<script>
-						let alarmOn = false;
-
-						document.getElementById("alarm-btn").addEventListener("click", () => {
-							const newState = alarmOn ? "OFF" : "ON";
-							fetch("/toggle_alarm", {
-								method: "POST",
-								headers: {
-									"Content-Type": "application/json"
-								},
-								body: JSON.stringify({ state: newState })
-							})
-							.then(res => res.json())
-							.then(data => {
-								console.log(data);
-								alarmOn = !alarmOn;
-								document.getElementById("alarm-label").innerText = alarmOn ? "Deactivate Alarm" : "Activate Alarm";
-								document.getElementById("alarm-btn").style.backgroundColor = alarmOn ? "#43a047" : "#e53935";
-								document.getElementById("alarm-btn").style.borderColor = alarmOn ? "#43a047" : "#e53935";
-							});
-						});
-					</script>
-
-					</div>
 				</div>
-			</section>
+
+				<script>
+					let alarmOn = false;
+
+					document.getElementById("alarm-btn").addEventListener("click", () => {
+						const newState = alarmOn ? "OFF" : "ON";
+						fetch("/toggle_alarm", {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json"
+							},
+							body: JSON.stringify({ state: newState })
+						})
+						.then(res => res.json())
+						.then(data => {
+							console.log(data);
+							alarmOn = !alarmOn;
+
+							// Cambia il testo del bottone
+							document.getElementById("alarm-label").innerText = alarmOn ? "Deactivate Alarm" : "Activate Alarm";
+
+							// Cambia il colore del bottone
+							document.getElementById("alarm-btn").style.backgroundColor = alarmOn ? "#43a047" : "#e53935";
+							document.getElementById("alarm-btn").style.borderColor = alarmOn ? "#43a047" : "#e53935";
+
+							// Cambia l'immagine
+							document.getElementById("alarm-image").src = alarmOn ? "images/pic2.png" : "images/sleep_homer.png";
+						});
+					});
+				</script>
+			</div>
+		</section>
 
 		<!-- Footer -->
-			<footer id="footer" class="wrapper alt">
-				<div class="inner">
-					<ul class="menu">
-						<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
-					</ul>
-				</div>
-			</footer>
+		<footer id="footer" class="wrapper alt">
+			<div class="inner">
+				<ul class="menu">
+					<li>&copy; Untitled. All rights reserved.</li>
+					<li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+				</ul>
+			</div>
+		</footer>
 
 		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/jquery.scrollex.min.js"></script>
-			<script src="assets/js/jquery.scrolly.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
+		<script src="assets/js/jquery.min.js"></script>
+		<script src="assets/js/jquery.scrollex.min.js"></script>
+		<script src="assets/js/jquery.scrolly.min.js"></script>
+		<script src="assets/js/browser.min.js"></script>
+		<script src="assets/js/breakpoints.min.js"></script>
+		<script src="assets/js/util.js"></script>
+		<script src="assets/js/main.js"></script>
 
 	</body>
 </html>
