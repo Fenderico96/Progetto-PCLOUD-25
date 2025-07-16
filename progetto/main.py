@@ -36,7 +36,6 @@ class User(UserMixin):
 db = 'progetto'
 db = firestore.Client(database=db)
 database = db 
-database_local = []    #mi serve per vedere i dati che arrivano con la route /show
 collection1 = 'Sensore Temperatura'
 collection2 = 'Sensore Porta'
 
@@ -178,9 +177,6 @@ def logout():
     logout_user()
     return redirect('/static/start.html')
 
-@app.route('/show')
-def show():
-    return str(database_local)
 
 
 @app.route('/toggle_alarm', methods=['POST'])
@@ -263,8 +259,6 @@ def handle_mqtt_message(client, userdata, message):
                 print("Chiave Temperature mancante")
         except json.JSONDecodeError:
             print("Errore nel parsing del JSON:", msg_payload)
-
-    database_local.append(msg_payload)
 
 
 # Flask route to handle MQTT-triggered action
