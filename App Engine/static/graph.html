@@ -209,8 +209,8 @@
         if (allTemps.length > 0) {
             const minTemp = Math.min(...allTemps);
             const maxTemp = Math.max(...allTemps);
-            chart.options.scales.y.min = minTemp - 2;
-            chart.options.scales.y.max = maxTemp + 2;
+            chart.options.scales.y.min = minTemp - 0.5;
+            chart.options.scales.y.max = maxTemp + 0.5;
         } else {
             chart.options.scales.y.min = 0;
             chart.options.scales.y.max = 30;
